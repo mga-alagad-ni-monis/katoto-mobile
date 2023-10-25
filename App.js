@@ -1,7 +1,7 @@
 import { NavigationContainer, StackRouter } from "@react-navigation/native";
 import { useEffect, useState, useReducer } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, SafeAreaView, View } from "react-native";
 import tw from "twrnc";
 
 import Chat from "./pages/Chat";
@@ -27,7 +27,11 @@ export default function App() {
       try {
         accessToken = await AsyncStorage.getItem("accessToken");
         userInfo = await AsyncStorage.getItem("userInfo");
-        dispatch({ type: "RETRIEVE_TOKEN", accessToken, userInfo });
+        dispatch({
+          type: "RETRIEVE_TOKEN",
+          accessToken,
+          userInfo: JSON.parse(userInfo),
+        });
       } catch (err) {
         console.log(err);
       }
@@ -60,14 +64,14 @@ export default function App() {
     }
   };
 
-  const [loginState, dispatch] = useReducer(loginReducer, initialLoginState);
+  const [auth, dispatch] = useReducer(loginReducer, initialLoginState);
 
   const authContext = useMemo(
     () => ({
       signIn: async (userInfo, accessToken) => {
         try {
           await AsyncStorage.setItem("accessToken", accessToken);
-          await AsyncStorage.setItem("userInfo", userInfo);
+          await AsyncStorage.setItem("userInfo", JSON.stringify(userInfo));
         } catch (e) {
           console.log(e);
         }
@@ -87,11 +91,15 @@ export default function App() {
     []
   );
 
-  if (loginState.isLoading) {
+  if (auth.isLoading) {
     return (
-      <View style={tw`bg-[#f5f3eb] flex justify-center items-center w-full`}>
-        <ActivityIndicator size="large" color="#2d757c" />
-      </View>
+      <SafeAreaView
+        style={tw`bg-[#f5f3eb] flex justify-center items-center w-full h-full`}
+      >
+        <View>
+          <ActivityIndicator size="large" color="#2d757c" />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -99,16 +107,27 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={authContext}>
-      {console.log(loginState)}
       <NavigationContainer>
-        {loginState.userInfo && loginState.accessToken ? (
+        {auth.userInfo && auth.accessToken ? (
           <Stack.Navigator>
-            <Stack.Screen name="Chat" component={Chat} />
+            <Stack.Screen
+              name="Chat"
+              component={() => <Chat auth={auth} />}
+              options={{ headerShown: false }}
+            />
           </Stack.Navigator>
         ) : (
           <Stack.Navigator>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Home" component={Home} />
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Home"
+              component={Home}
+              options={{ headerShown: false }}
+            />
           </Stack.Navigator>
         )}
       </NavigationContainer>
