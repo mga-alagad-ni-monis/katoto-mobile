@@ -46,8 +46,8 @@ function LoginScreen() {
         .post(
           `${API_URI}/api/login`,
           {
-            email,
-            password,
+            email: "alvinpanerio@plv.edu.ph",
+            password: "09182001",
           },
           {
             headers: { "Content-Type": "application/json" },
@@ -55,6 +55,7 @@ function LoginScreen() {
           }
         )
         .then((res) => {
+          console.log(res);
           signIn(res?.data?.userInfo, res?.data?.accessToken);
           setIsLoading(false);
         })
@@ -75,7 +76,7 @@ function LoginScreen() {
         onChangeText={(text) => setEmail(text)}
       ></TextInput>
       <TextInput
-        style={tw`rounded-full border border-[--light-gray] bg-transparent w-full px-5 py-2 mt-4 mb-4`}
+        style={tw`rounded-full border bg-transparent w-full px-5 py-2 mt-4 mb-4`}
         secureTextEntry={true}
         onChangeText={(text) => setPassword(text)}
       ></TextInput>

@@ -1,15 +1,17 @@
 import { NavigationContainer, StackRouter } from "@react-navigation/native";
-import { useEffect, useState, useReducer } from "react";
+import { useEffect, useState, useReducer, useMemo } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ActivityIndicator, SafeAreaView, View } from "react-native";
+import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import tw from "twrnc";
+import axios from "axios";
+import { API_URI } from "@env";
 
 import Chat from "./pages/Chat";
 import Home from "./pages/Home";
 import LoginScreen from "./pages/LoginScreen";
 import { AuthContext } from "./context/AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useMemo } from "react";
 
 export default function App() {
   const initialLoginState = {
@@ -32,8 +34,21 @@ export default function App() {
           accessToken,
           userInfo: JSON.parse(userInfo),
         });
+
+        await axios
+          .get(`${API_URI}/api/refresh`, {
+            withCredentials: true,
+          })
+          .then((res) => {
+            dispatch({
+              type: "RETRIEVE_TOKEN",
+              accessToken: res?.data?.accessToken,
+              userInfo: JSON.parse(res?.data?.userInfo),
+            });
+          });
       } catch (err) {
-        console.log(err);
+        await AsyncStorage.removeItem("accessToken");
+        await AsyncStorage.removeItem("userInfo");
       }
     }, 1000);
   }, []);
@@ -112,7 +127,7 @@ export default function App() {
           <Stack.Navigator>
             <Stack.Screen
               name="Chat"
-              component={() => <Chat auth={auth} />}
+              component={() => <Chat auth={auth} Toast={Toast} />}
               options={{ headerShown: false }}
             />
           </Stack.Navigator>
