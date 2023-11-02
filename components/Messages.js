@@ -1,6 +1,14 @@
 import { useCallback, memo, useRef, useState } from "react";
-import { FlatList, View, Image, Text, ActivityIndicator } from "react-native";
+import {
+  FlatList,
+  View,
+  Image,
+  Text,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { TypingAnimation } from "react-native-typing-animation";
+
 import tw from "twrnc";
 
 const Messages = memo(
@@ -16,11 +24,8 @@ const Messages = memo(
     const [offset, setOffset] = useState(70);
 
     const [isLoading, setIsLoading] = useState(false);
-    const [isReady, setIsReady] = useState(true);
-
-    useState(() => {
-      bottomRef?.current?.scrollToEnd({ animated: true });
-    }, [messages]);
+    const [isReady, setIsReady] = useState(false);
+    const [percVal, setPercVal] = useState(100);
 
     // useState(() => {
     //   bottomRef?.current?.scrollToOffset({ animated: true, offset: offset });
@@ -59,7 +64,7 @@ const Messages = memo(
 
     const keyExtractor = useCallback((item, index) => index);
 
-    const listFooterComponent = useCallback(() => {
+    const listHeaderComponent = useCallback(() => {
       return (
         <>
           <ActivityIndicator size="large" color="#2d757c" />
@@ -67,58 +72,86 @@ const Messages = memo(
       );
     }, []);
 
+    const downComponent = useCallback(() => {
+      return (
+        <>
+          <TouchableOpacity
+            style={tw`t.absolute text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
+          >
+            <Text style={tw`text-[#f5f3eb] font-medium`}>
+              Counselor-Guided Mode
+            </Text>
+          </TouchableOpacity>
+        </>
+      );
+    }, []);
+
     return (
       <FlatList
         data={messages}
-        style={tw`h-full flex flex-col gap-3 my-3 px-2`}
+        style={tw`h-full flex flex-col gap-3 my-3 px-2 t.relative`}
         renderItem={item}
         initialNumToRender={messages.length}
         ref={bottomRef}
         keyExtractor={keyExtractor}
         windowSize={11}
         onStartReachedThreshold={1}
-        ListHeaderComponent={isLoading ? listFooterComponent : null}
-        ListFooterComponent={isLoading ? listFooterComponent : null}
+        ListHeaderComponent={isLoading ? listHeaderComponent : null}
+        // ListFooterComponent={true ? downComponent : null}
         onScroll={(event) => {
           const currentOffset = event.nativeEvent.contentOffset.y;
           const totalOffset =
             event.nativeEvent.contentSize.height -
             event.nativeEvent.layoutMeasurement.height;
-          const perc = (currentOffset / totalOffset) * 100;
-          if (perc >= 100) {
-            if (isReady === true) {
-              if (limit > 20) {
-                setIsLoading(true);
-                setIsReady(false);
-                setTimeout(async () => {
-                  setLimit((prev) => (prev <= 20 ? 20 : prev - 20));
-                  await handleGetConversation();
-                  setIsLoading(false);
-                  setOffset(100);
-                }, 3000);
-              }
-            }
-          } else if (perc <= 0) {
-            if (isReady === true) {
-              setIsLoading(true);
-              setIsReady(false);
-              setTimeout(async () => {
-                setLimit((prev) => prev + 20);
-                await handleGetConversation();
-                setIsLoading(false);
-                setOffset(70);
-              }, 3000);
-            }
-          } else {
+          let perc = (currentOffset / totalOffset) * 100;
+          setPercVal((prev) => perc);
+          if (perc > 2 && perc < 90) {
             setIsReady(true);
           }
         }}
-        onContentSizeChange={() =>
-          bottomRef.current.scrollToEnd({ animated: true, behavior: "smooth" })
-        }
-        onLayout={() =>
-          bottomRef.current.scrollToEnd({ animated: true, behavior: "smooth" })
-        }
+        onStartReached={() => {
+          if (isReady) {
+            setIsLoading(true);
+            setIsReady(false);
+            setTimeout(async () => {
+              setLimit((prev) => prev + 20);
+              await handleGetConversation(limit + 20);
+              setIsLoading(false);
+              setOffset(70);
+            }, 3000);
+          }
+        }}
+        // onEndReached={() => {
+        //   if (limit > 20 && isReady) {
+        //     console.log("pumasok");
+        //     setIsLoading(true);
+        //     setIsReady(false);
+        //     setTimeout(async () => {
+        //       setLimit((prev) => prev - 20);
+        //       await handleGetConversation();
+        //       setIsLoading(false);
+        //       setOffset(100);
+        //     }, 3000);
+        //   }
+        // }}
+        onContentSizeChange={() => {
+          if (!(percVal <= 0)) {
+            setIsReady(false);
+            return bottomRef.current.scrollToEnd({
+              animated: true,
+              behavior: "smooth",
+            });
+          }
+        }}
+        onLayout={() => {
+          if (!(percVal <= 0)) {
+            setIsReady(false);
+            return bottomRef.current.scrollToEnd({
+              animated: true,
+              behavior: "smooth",
+            });
+          }
+        }}
       />
     );
   }

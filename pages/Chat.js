@@ -80,18 +80,20 @@ const Chat = memo(({ auth, Toast }) => {
     }
   }
 
-  useEffect(() => {
-    (async () => {
-      await handleGetConversation();
-      setIsLoading(false);
-    })();
-  }, []);
+  // useEffect(() => {
+  //   (async () => {
+  //     await handleGetConversation(20);
+  //     setIsLoading(false);
+  //   })();
+  // }, []);
 
   useEffect(() => {
     if (isGuided || isFriendly) {
       (async () => {
+        if (isGuided) {
+          await handleGetConversation(20);
+        }
         setDisable(true);
-        await handleGetConversation();
         setIsLoading(false);
         handleSubmitMessage(
           auth?.accessToken,
@@ -108,11 +110,10 @@ const Chat = memo(({ auth, Toast }) => {
 
   let isLoadMore = true;
 
-  const handleGetConversation = async (req, res) => {
+  const handleGetConversation = async (param) => {
     try {
-      console.log(limit);
       await axios
-        .get(`${API_URI}/api/logs/get/student-limit?limit=${limit}`, {
+        .get(`${API_URI}/api/logs/get/student-limit?limit=${param}`, {
           withCredentials: true,
           headers: {
             Authorization: `Bearer ${auth?.accessToken}`,
@@ -153,10 +154,10 @@ const Chat = memo(({ auth, Toast }) => {
         sender,
         message: msg ? msg : inputMessage.title,
       });
-      actionMessage("ADD_MESSAGE", {
-        sender: "Katoto",
-        message: " ",
-      });
+      // actionMessage("ADD_MESSAGE", {
+      //   sender: "Katoto",
+      //   message: " ",
+      // });
 
       axios
         .post(isGuided ? KATOTO_CG_API_URI : KATOTO_FC_API_URI, {
@@ -178,10 +179,10 @@ const Chat = memo(({ auth, Toast }) => {
             setTimeout(() => {
               //typing
               setIsTyping(false);
-              actionMessage("POP_MESSAGE", {
-                sender: "Katoto",
-                message: " ",
-              });
+              // actionMessage("POP_MESSAGE", {
+              //   sender: "Katoto",
+              //   message: " ",
+              // });
               actionMessage("ADD_MESSAGE", {
                 sender: "Katoto",
                 message: res.data[0].text,
@@ -209,7 +210,7 @@ const Chat = memo(({ auth, Toast }) => {
             // if (inputMessage.payload === "Open Feedback") {
             //   setIsOpenFeedbackModal(true);
             // }
-
+            console.log(res.data[0].text);
             await axios
               .post(
                 `${API_URI}/api/logs/send`,
@@ -232,6 +233,7 @@ const Chat = memo(({ auth, Toast }) => {
               )
               .then((res) => {
                 setKatotoMessage("");
+                console.log("asdasdas");
                 return;
               })
               .catch((err) => {
@@ -297,6 +299,11 @@ const Chat = memo(({ auth, Toast }) => {
     }
   };
 
+  const goBack = async () => {
+    setLimit(20);
+    await handleGetConversation(20);
+  };
+
   return (
     <SafeAreaView>
       <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3`}>
@@ -308,6 +315,7 @@ const Chat = memo(({ auth, Toast }) => {
               setIsGuided(false);
               setIsFriendly(false);
               setGuidedButtons([]);
+              setLimit(0);
               actionMessage("DELETE_MESSAGE", {});
             }}
           >
@@ -316,44 +324,6 @@ const Chat = memo(({ auth, Toast }) => {
         </View>
 
         {isGuided || isFriendly ? (
-          // <ScrollView
-          //   style={tw`h-full flex flex-col gap-3 my-3`}
-          //   ref={bottomRef}
-          //   onContentSizeChange={() =>
-          //     bottomRef.current.scrollToEnd({
-          //       animated: true,
-          //       behavior: "smooth",
-          //     })
-          //   }
-          // >
-          //   {messages?.map((i, k) => {
-          //     return i?.sender === "Katoto" ? (
-          //       <View
-          //         key={k}
-          //         style={tw`flex flex-row w-full justify-start gap-3`}
-          //       >
-          //         <Image
-          //           style={tw`h-[30px] w-[30px]`}
-          //           source={require("../assets/katoto/katoto-logo.png")}
-          //         />
-
-          //         <Text
-          //           style={tw`bg-black/10 max-w-[80%] py-3 px-4 rounded-b-3xl rounded-tr-3xl text-sm flex items-center text-left mt-5`}
-          //         >
-          //           {i?.message}
-          //         </Text>
-          //       </View>
-          //     ) : (
-          //       <View key={k} style={tw`flex flex-row w-full justify-end`}>
-          //         <Text
-          //           style={tw`bg-[#a9e6c2] max-w-[80%] py-3 px-4 rounded-t-3xl rounded-bl-3xl text-sm flex items-center text-left mt-5`}
-          //         >
-          //           {i?.message}
-          //         </Text>
-          //       </View>
-          //     );
-          //   })}
-          // </ScrollView>
           <Messages
             messages={messages}
             isTyping={isTyping}
@@ -363,10 +333,6 @@ const Chat = memo(({ auth, Toast }) => {
             limit={limit}
           />
         ) : (
-          // <RecyclerListView
-          //   dataProvider={messages}
-          //   layoutProvider={layoutProvider}
-          // ></RecyclerListView>
           <View style={tw`flex items-center gap-3 h-full justify-end pb-10`}>
             <Text>Click to choose</Text>
             <TouchableOpacity
@@ -383,6 +349,7 @@ const Chat = memo(({ auth, Toast }) => {
               style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
               onPress={() => {
                 setIsFriendly(true);
+                actionMessage("DELETE_MESSAGE", {});
               }}
             >
               <Text style={tw`text-[#f5f3eb] font-medium`}>
@@ -398,7 +365,7 @@ const Chat = memo(({ auth, Toast }) => {
             style={tw`flex flex-row w-full gap-3 px-5 justify-center items-center`}
           >
             {isGuided ? (
-              <View style={tw`flex flex-row flex-wrap gap-2`}>
+              <View style={tw`flex flex-row flex-wrap gap-2 relative`}>
                 {guidedButtons?.map((i, k) => {
                   return (
                     <TouchableOpacity
@@ -414,6 +381,26 @@ const Chat = memo(({ auth, Toast }) => {
                     </TouchableOpacity>
                   );
                 })}
+                {limit > 20 ? (
+                  <View
+                    style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
+                  >
+                    <View style={tw`w-full flex justify-center items-center`}>
+                      <TouchableOpacity
+                        style={tw`text-sm p-1 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
+                        onPress={goBack}
+                      >
+                        <SimpleLineIcons
+                          name="arrow-down-circle"
+                          size={24}
+                          color="#f5f3eb"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <></>
+                )}
               </View>
             ) : (
               <></>
