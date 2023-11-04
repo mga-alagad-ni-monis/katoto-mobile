@@ -1,31 +1,17 @@
-import {
-  Text,
-  TextInput,
-  View,
-  TouchableOpacity,
-  Image,
-  FlatList,
-} from "react-native";
+import { Text, TextInput, View, TouchableOpacity, Image } from "react-native";
 import { AuthContext } from "../context/AuthContext";
-
 import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import tw from "twrnc";
 import { useState } from "react";
 import { API_URI, KATOTO_CG_API_URI, KATOTO_FC_API_URI } from "@env";
-import {
-  useEffect,
-  useRef,
-  memo,
-  useReducer,
-  useCallback,
-  useContext,
-} from "react";
+import { useEffect, memo, useReducer, useContext } from "react";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import ToastComponent from "../components/ToastComponent";
 import { TypingAnimation } from "react-native-typing-animation";
 import Messages from "../components/Messages";
+import { AnimatePresence, Motion } from "@legendapp/motion";
 
 const Chat = memo(({ auth, Toast }) => {
   const { signOut } = useContext(AuthContext);
@@ -301,7 +287,9 @@ const Chat = memo(({ auth, Toast }) => {
       <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3 `}>
         {/* <Button title="Logout" onPress={signOut}></Button> */}
 
-        <View style={tw`w-full flex justify-between px-5 shadow-2xl mb-3`}>
+        <View
+          style={tw`w-full flex flex-row gap-5 items-center px-5 shadow-2xl mb-3`}
+        >
           <TouchableOpacity
             onPress={() => {
               setIsGuided(false);
@@ -313,10 +301,15 @@ const Chat = memo(({ auth, Toast }) => {
           >
             <SimpleLineIcons name="arrow-left" size={18} color="black" />
           </TouchableOpacity>
+          <Image
+            style={tw`h-[40px] w-[40px] bg-[#a9e6c2] rounded-full shadow-md`}
+            source={require("../assets/katoto/katoto-logo.png")}
+          />
         </View>
 
         {isGuided || isFriendly ? (
           <Messages
+            isGuided={isGuided}
             messages={messages}
             isTyping={isTyping}
             isLoadMore={isLoadMore}
@@ -349,82 +342,128 @@ const Chat = memo(({ auth, Toast }) => {
               </Text>
             </TouchableOpacity>
             <Text>Learn more about our Privacy Policy</Text>
-            <Text>Please leave a feedback here.</Text>
+            <Text style={tw`mb-10`}>Please leave a feedback here.</Text>
           </View>
         )}
         {isGuided || isFriendly ? (
           <View
             style={tw`flex flex-row w-full gap-3 px-5 justify-center items-center mt-3`}
           >
-            {isTyping ? (
-              <View
-                style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
-              >
-                <View style={tw`w-full flex justify-center items-center`}>
-                  <View
-                    style={tw`w-auto flex flex-row gap-2 items-center justify-center text-sm py-1 px-2 rounded-full bg-[#f5f3eb] shadow`}
-                  >
-                    <Image
-                      style={tw`h-[30px] w-[30px]`}
-                      source={require("../assets/katoto/katoto-logo.png")}
-                    />
+            <AnimatePresence>
+              {isTyping ? (
+                <Motion.View
+                  key={"1"}
+                  initial={{ opacity: 1, scale: 0 }}
+                  exit={{ opacity: 1, scale: 0 }}
+                  animate={{
+                    opacity: 1,
+                    scale: 1,
+                  }}
+                  transition={{
+                    type: "spring",
+                    delayChildren: 0.2,
+                    staggerChildren: 0.2,
+                  }}
+                  style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
+                >
+                  <View style={tw`w-full flex justify-center items-center`}>
+                    <View
+                      style={tw`w-auto flex flex-row gap-2 items-center justify-center text-sm py-1 px-2 rounded-full bg-[#f5f3eb] shadow`}
+                    >
+                      <Image
+                        style={tw`h-[30px] w-[30px]`}
+                        source={require("../assets/katoto/katoto-logo.png")}
+                      />
 
-                    <TypingAnimation
-                      style={tw`h-[30px] w-[35px]`}
-                      dotColor="#2d757c"
-                      dotMargin={8}
-                      dotAmplitude={5}
-                      dotSpeed={0.2}
-                      dotRadius={4}
-                    />
+                      <TypingAnimation
+                        style={tw`h-[30px] w-[35px]`}
+                        dotColor="#2d757c"
+                        dotMargin={8}
+                        dotAmplitude={5}
+                        dotSpeed={0.2}
+                        dotRadius={4}
+                      />
+                    </View>
                   </View>
-                </View>
-              </View>
-            ) : (
-              <></>
-            )}
+                </Motion.View>
+              ) : (
+                <></>
+              )}
+            </AnimatePresence>
+
             {isGuided ? (
-              <View style={tw`flex flex-row flex-wrap gap-2 relative`}>
+              <View
+                style={tw`flex flex-row flex-wrap gap-2 items-center justify-center`}
+              >
                 {guidedButtons?.map((i, k) => {
                   return (
-                    <TouchableOpacity
-                      key={k}
-                      style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
-                      onPress={() => {
-                        handleSubmitMessage(auth.accessToken, i);
+                    <Motion.View
+                      initial={{ y: 20, opacity: 0 }}
+                      exit={{ y: 20, opacity: 0 }}
+                      animate={{
+                        y: 0,
+                        opacity: 1,
                       }}
+                      transition={{
+                        delayChildren: 0.3,
+                        staggerChildren: 0.2,
+                      }}
+                      key={k}
                     >
-                      <Text style={tw`text-[#f5f3eb] font-medium`}>
-                        {i.title}
-                      </Text>
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        key={k}
+                        style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
+                        onPress={() => {
+                          handleSubmitMessage(auth.accessToken, i);
+                        }}
+                      >
+                        <Text style={tw`text-[#f5f3eb] font-medium`}>
+                          {i.title}
+                        </Text>
+                      </TouchableOpacity>
+                    </Motion.View>
                   );
                 })}
 
-                {limit > 20 ? (
-                  <View
-                    style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
-                  >
-                    <View style={tw`w-full flex justify-center items-center`}>
-                      <TouchableOpacity
-                        style={tw`text-sm py-1 px-1.2 rounded-full bg-[#2d757c] border-2 border-[#2d757c] shadow-md`}
-                        onPress={goBack}
-                      >
-                        <Ionicons
-                          name="arrow-down-outline"
-                          size={18}
-                          color="#f5f3eb"
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ) : (
-                  <></>
-                )}
+                <AnimatePresence>
+                  {limit > 20 ? (
+                    <Motion.View
+                      key={"2"}
+                      initial={{ opacity: 1, scale: 0 }}
+                      exit={{ opacity: 1, scale: 0 }}
+                      animate={{
+                        opacity: 1,
+                        scale: 1,
+                      }}
+                      transition={{
+                        type: "spring",
+                        delayChildren: 0.3,
+                        staggerChildren: 0.2,
+                      }}
+                      style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
+                    >
+                      <View style={tw`w-full flex justify-center items-center`}>
+                        <TouchableOpacity
+                          style={tw`text-sm py-1 px-1.2 rounded-full bg-[#2d757c] border-2 border-[#2d757c] shadow-md`}
+                          onPress={goBack}
+                        >
+                          <Ionicons
+                            name="arrow-down-outline"
+                            size={18}
+                            color="#f5f3eb"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </Motion.View>
+                  ) : (
+                    <></>
+                  )}
+                </AnimatePresence>
               </View>
             ) : (
               <></>
             )}
+
             {isFriendly ? (
               <>
                 <TextInput

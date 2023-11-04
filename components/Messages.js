@@ -8,19 +8,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-import { TypingAnimation } from "react-native-typing-animation";
+import { Motion } from "@legendapp/motion";
 
 import tw from "twrnc";
 
 const Messages = memo(
-  ({
-    messages,
-    isTyping,
-    isLoadMore,
-    handleGetConversation,
-    setLimit,
-    limit,
-  }) => {
+  ({ messages, handleGetConversation, setLimit, limit, isGuided }) => {
     const bottomRef = useRef(null);
     const [offset, setOffset] = useState(70);
 
@@ -39,24 +32,56 @@ const Messages = memo(
             style={tw`flex flex-row w-full justify-start gap-3`}
             key={index}
           >
-            <Image
+            <Motion.Image
+              initial={{ opacity: 1, scale: 0 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              transition={{
+                type: "spring",
+                delayChildren: 0.2,
+                staggerChildren: 0.2,
+              }}
               style={tw`h-[30px] w-[30px]`}
               source={require("../assets/katoto/katoto-logo.png")}
             />
 
-            <Text
+            <Motion.Text
+              initial={{ opacity: 1, scale: 0, x: -100 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                x: 0,
+              }}
+              transition={{
+                type: "spring",
+                delayChildren: 0.2,
+                staggerChildren: 0.2,
+              }}
               style={tw`bg-black/10 max-w-[80%] py-3 px-4 rounded-b-3xl rounded-tr-3xl text-sm flex items-center text-left mt-5`}
             >
               {item?.message}
-            </Text>
+            </Motion.Text>
           </View>
         ) : (
-          <View style={tw`flex flex-row w-full justify-end`}>
-            <Text
+          <View style={tw`flex flex-row w-full justify-end`} key={index}>
+            <Motion.Text
+              initial={{ opacity: 1, scale: 0, x: 100 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                x: 0,
+              }}
+              transition={{
+                type: "spring",
+                delayChildren: 0.2,
+                staggerChildren: 0.2,
+              }}
               style={tw`bg-[#a9e6c2] max-w-[80%] py-3 px-4 rounded-t-3xl rounded-bl-3xl text-sm flex items-center text-left mt-5 mr-3`}
             >
               {item?.message}
-            </Text>
+            </Motion.Text>
           </View>
         );
       },
@@ -110,7 +135,7 @@ const Messages = memo(
           }
         }}
         onStartReached={() => {
-          if (isReady) {
+          if (isReady && isGuided) {
             setIsLoading(true);
             setIsReady(false);
             setTimeout(async () => {

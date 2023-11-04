@@ -125,11 +125,9 @@ export default function App() {
       <NavigationContainer>
         {auth.userInfo && auth.accessToken ? (
           <Stack.Navigator>
-            <Stack.Screen
-              name="Chat"
-              component={() => <Chat auth={auth} Toast={Toast} />}
-              options={{ headerShown: false }}
-            />
+            <Stack.Screen name="Chat" options={{ headerShown: false }}>
+              {(props) => <Chat {...props} auth={auth} Toast={Toast} />}
+            </Stack.Screen>
           </Stack.Navigator>
         ) : (
           <Stack.Navigator>
