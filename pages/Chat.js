@@ -80,13 +80,6 @@ const Chat = memo(({ auth, Toast }) => {
     }
   }
 
-  // useEffect(() => {
-  //   (async () => {
-  //     await handleGetConversation(20);
-  //     setIsLoading(false);
-  //   })();
-  // }, []);
-
   useEffect(() => {
     if (isGuided || isFriendly) {
       (async () => {
@@ -210,7 +203,7 @@ const Chat = memo(({ auth, Toast }) => {
             // if (inputMessage.payload === "Open Feedback") {
             //   setIsOpenFeedbackModal(true);
             // }
-            console.log(res.data[0].text);
+
             await axios
               .post(
                 `${API_URI}/api/logs/send`,
@@ -233,7 +226,6 @@ const Chat = memo(({ auth, Toast }) => {
               )
               .then((res) => {
                 setKatotoMessage("");
-                console.log("asdasdas");
                 return;
               })
               .catch((err) => {
@@ -306,10 +298,10 @@ const Chat = memo(({ auth, Toast }) => {
 
   return (
     <SafeAreaView>
-      <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3`}>
+      <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3 `}>
         {/* <Button title="Logout" onPress={signOut}></Button> */}
 
-        <View style={tw`w-full flex justify-between px-5`}>
+        <View style={tw`w-full flex justify-between px-5 shadow-2xl mb-3`}>
           <TouchableOpacity
             onPress={() => {
               setIsGuided(false);
@@ -362,8 +354,35 @@ const Chat = memo(({ auth, Toast }) => {
         )}
         {isGuided || isFriendly ? (
           <View
-            style={tw`flex flex-row w-full gap-3 px-5 justify-center items-center`}
+            style={tw`flex flex-row w-full gap-3 px-5 justify-center items-center mt-3`}
           >
+            {isTyping ? (
+              <View
+                style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
+              >
+                <View style={tw`w-full flex justify-center items-center`}>
+                  <View
+                    style={tw`w-auto flex flex-row gap-2 items-center justify-center text-sm py-1 px-2 rounded-full bg-[#f5f3eb] shadow`}
+                  >
+                    <Image
+                      style={tw`h-[30px] w-[30px]`}
+                      source={require("../assets/katoto/katoto-logo.png")}
+                    />
+
+                    <TypingAnimation
+                      style={tw`h-[30px] w-[35px]`}
+                      dotColor="#2d757c"
+                      dotMargin={8}
+                      dotAmplitude={5}
+                      dotSpeed={0.2}
+                      dotRadius={4}
+                    />
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <></>
+            )}
             {isGuided ? (
               <View style={tw`flex flex-row flex-wrap gap-2 relative`}>
                 {guidedButtons?.map((i, k) => {
@@ -381,18 +400,19 @@ const Chat = memo(({ auth, Toast }) => {
                     </TouchableOpacity>
                   );
                 })}
+
                 {limit > 20 ? (
                   <View
                     style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
                   >
                     <View style={tw`w-full flex justify-center items-center`}>
                       <TouchableOpacity
-                        style={tw`text-sm p-1 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
+                        style={tw`text-sm py-1 px-1.2 rounded-full bg-[#2d757c] border-2 border-[#2d757c] shadow-md`}
                         onPress={goBack}
                       >
-                        <SimpleLineIcons
-                          name="arrow-down-circle"
-                          size={24}
+                        <Ionicons
+                          name="arrow-down-outline"
+                          size={18}
                           color="#f5f3eb"
                         />
                       </TouchableOpacity>

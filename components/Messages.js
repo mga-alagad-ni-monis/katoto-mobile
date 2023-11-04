@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
+
 import { TypingAnimation } from "react-native-typing-animation";
 
 import tw from "twrnc";
@@ -66,9 +67,9 @@ const Messages = memo(
 
     const listHeaderComponent = useCallback(() => {
       return (
-        <>
+        <View style={tw`mt-5`}>
           <ActivityIndicator size="large" color="#2d757c" />
-        </>
+        </View>
       );
     }, []);
 
@@ -89,7 +90,7 @@ const Messages = memo(
     return (
       <FlatList
         data={messages}
-        style={tw`h-full flex flex-col gap-3 my-3 px-2 t.relative`}
+        style={tw`h-full flex flex-col gap-3 px-2 t.relative`}
         renderItem={item}
         initialNumToRender={messages.length}
         ref={bottomRef}
@@ -97,7 +98,6 @@ const Messages = memo(
         windowSize={11}
         onStartReachedThreshold={1}
         ListHeaderComponent={isLoading ? listHeaderComponent : null}
-        // ListFooterComponent={true ? downComponent : null}
         onScroll={(event) => {
           const currentOffset = event.nativeEvent.contentOffset.y;
           const totalOffset =
