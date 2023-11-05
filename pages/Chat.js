@@ -2,9 +2,9 @@ import { Text, TextInput, View, TouchableOpacity, Image } from "react-native";
 import { AuthContext } from "../context/AuthContext";
 import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import tw from "twrnc";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { API_URI, KATOTO_CG_API_URI, KATOTO_FC_API_URI } from "@env";
-import { useEffect, memo, useReducer, useContext } from "react";
+import { useEffect, memo, useReducer, useContext, useMemo } from "react";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
@@ -52,7 +52,9 @@ const Chat = memo(({ auth, Toast }) => {
   function messageReducer(state, action) {
     switch (action.type) {
       case "ADD_MESSAGE":
-        return [...state, action.payload];
+        return isGuided || state?.length > 20
+          ? [...state.slice(1), action.payload]
+          : [...state, action.payload];
       case "GET_MESSAGE":
         return action.payload;
       case "DELETE_MESSAGE":
@@ -86,8 +88,6 @@ const Chat = memo(({ auth, Toast }) => {
       })();
     }
   }, [isGuided, isFriendly]);
-
-  let isLoadMore = true;
 
   const handleGetConversation = async (param) => {
     try {
@@ -282,6 +282,11 @@ const Chat = memo(({ auth, Toast }) => {
     await handleGetConversation(20);
   };
 
+  const memoizedHandleSendMessage = useCallback(
+    (auth, msg) => handleSubmitMessage(auth, msg),
+    [friendlyMsg, guidedButtons]
+  );
+
   return (
     <SafeAreaView>
       <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3 `}>
@@ -302,7 +307,7 @@ const Chat = memo(({ auth, Toast }) => {
             <SimpleLineIcons name="arrow-left" size={18} color="black" />
           </TouchableOpacity>
           <Image
-            style={tw`h-[40px] w-[40px] bg-[#a9e6c2] rounded-full shadow-md`}
+            style={tw`h-[40px] w-[40px] bg-[#a9e6c2] rounded-full`}
             source={require("../assets/katoto/katoto-logo.png")}
           />
         </View>
@@ -311,8 +316,6 @@ const Chat = memo(({ auth, Toast }) => {
           <Messages
             isGuided={isGuided}
             messages={messages}
-            isTyping={isTyping}
-            isLoadMore={isLoadMore}
             handleGetConversation={handleGetConversation}
             setLimit={setLimit}
             limit={limit}
@@ -364,7 +367,7 @@ const Chat = memo(({ auth, Toast }) => {
                     delayChildren: 0.2,
                     staggerChildren: 0.2,
                   }}
-                  style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
+                  style={tw`w-full -top-14 transform -translate-x-1/2 absolute`}
                 >
                   <View style={tw`w-full flex justify-center items-center`}>
                     <View
@@ -414,7 +417,7 @@ const Chat = memo(({ auth, Toast }) => {
                         key={k}
                         style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
                         onPress={() => {
-                          handleSubmitMessage(auth.accessToken, i);
+                          memoizedHandleSendMessage(auth.accessToken, i);
                         }}
                       >
                         <Text style={tw`text-[#f5f3eb] font-medium`}>
@@ -440,7 +443,7 @@ const Chat = memo(({ auth, Toast }) => {
                         delayChildren: 0.3,
                         staggerChildren: 0.2,
                       }}
-                      style={tw`w-full -top-14 transform -translate-x-1/2 -translate-y-1/2 absolute`}
+                      style={tw`w-full -top-14 transform -translate-x-1/2 absolute`}
                     >
                       <View style={tw`w-full flex justify-center items-center`}>
                         <TouchableOpacity
@@ -471,7 +474,7 @@ const Chat = memo(({ auth, Toast }) => {
                   onChangeText={(text) => {
                     actionFriendlyMsg("ADD_MESSAGE", text);
                   }}
-                  style={tw`bg-black/10 rounded-lg h-[46px] p-3 text-sm focus:outline-none placeholder-black/30 font-semibold w-4/5`}
+                  style={tw`bg-black/10 rounded-lg h-[46px] p-3 text-sm focus:outline-none font-semibold w-4/5`}
                   placeholder="Aa..."
                 ></TextInput>
 
@@ -482,7 +485,7 @@ const Chat = memo(({ auth, Toast }) => {
           }`}
                   disabled={!friendlyMsg.trim() || disable ? true : false}
                   onPress={() => {
-                    handleSubmitMessage(auth.accessToken, friendlyMsg);
+                    memoizedHandleSendMessage(auth.accessToken, friendlyMsg);
                   }}
                 >
                   <Ionicons name="send" size={18} color="#f5f3eb" />
