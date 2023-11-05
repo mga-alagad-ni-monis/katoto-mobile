@@ -6,6 +6,8 @@ import Toast from "react-native-toast-message";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import tw from "twrnc";
 import axios from "axios";
+import { useFonts } from "expo-font";
+import AppLoading from "expo-app-loading";
 import { API_URI } from "@env";
 
 import Chat from "./pages/Chat";
@@ -14,6 +16,19 @@ import LoginScreen from "./pages/LoginScreen";
 import { AuthContext } from "./context/AuthContext";
 
 export default function App() {
+  let [fontsLoaded] = useFonts({
+    "Inter-Black": require("./assets/fonts/Inter-Black.ttf"),
+    "Inter-B": require("./assets/fonts/Inter-Bold.ttf"),
+    "Inter-EB": require("./assets/fonts/Inter-ExtraBold.ttf"),
+    "Inter-M": require("./assets/fonts/Inter-Medium.ttf"),
+    "Inter-EL": require("./assets/fonts/Inter-ExtraLight.ttf"),
+    "Inter-R": require("./assets/fonts/Inter-Regular.ttf"),
+  });
+
+  // if (!fontsLoaded) {
+  //   return <AppLoading />;
+  // }
+
   const initialLoginState = {
     isLoading: true,
     userInfo: null,
@@ -112,7 +127,7 @@ export default function App() {
         style={tw`bg-[#f5f3eb] flex justify-center items-center w-full h-full`}
       >
         <View>
-          <ActivityIndicator size="large" color="#2d757c" />
+          <ActivityIndicator size="extra-large" color="#2d757c" />
         </View>
       </SafeAreaView>
     );
