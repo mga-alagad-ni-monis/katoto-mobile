@@ -1,10 +1,25 @@
-import { Text, TextInput, View, TouchableOpacity, Image } from "react-native";
+import {
+  Text,
+  TextInput,
+  View,
+  TouchableOpacity,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+} from "react-native";
 import { AuthContext } from "../context/AuthContext";
 import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import tw from "twrnc";
-import { useCallback, useState } from "react";
 import { API_URI, KATOTO_CG_API_URI, KATOTO_FC_API_URI } from "@env";
-import { useEffect, memo, useReducer, useContext, useMemo } from "react";
+import {
+  useEffect,
+  memo,
+  useReducer,
+  useContext,
+  useCallback,
+  useState,
+} from "react";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
@@ -12,6 +27,7 @@ import ToastComponent from "../components/ToastComponent";
 import { TypingAnimation } from "react-native-typing-animation";
 import Messages from "../components/Messages";
 import { AnimatePresence, Motion } from "@legendapp/motion";
+import Checkbox from "expo-checkbox";
 
 const Chat = memo(({ auth, Toast }) => {
   const { signOut } = useContext(AuthContext);
@@ -21,6 +37,11 @@ const Chat = memo(({ auth, Toast }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [disable, setDisable] = useState(true);
+  const [isPrivacyPolicyChecked, setIsPrivacyPolicyChecked] = useState(false);
+  const [isPrivacyPolicyVisible, setIsPrivacyPolicyVisible] = useState([
+    false,
+    0,
+  ]);
 
   const [limit, setLimit] = useState(20);
 
@@ -113,7 +134,6 @@ const Chat = memo(({ auth, Toast }) => {
   const handleSubmitMessage = async (sender, inputMessage) => {
     try {
       let msg = "";
-
       if (!isGuided) {
         if (!inputMessage.trim()) {
           return Toast.show({
@@ -289,7 +309,184 @@ const Chat = memo(({ auth, Toast }) => {
 
   return (
     <SafeAreaView>
-      <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3 `}>
+      <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3`}>
+        <AnimatePresence>
+          <Modal visible={isPrivacyPolicyVisible[0]} transparent>
+            <Motion.View
+              key={"modal1"}
+              initial={{ opacity: 0 }}
+              exit={{ opacity: 0 }}
+              animate={{
+                opacity: 1,
+              }}
+              transition={{
+                type: "spring",
+                delayChildren: 0.2,
+                staggerChildren: 0.2,
+              }}
+              style={tw`flex-1 justify-center`}
+            >
+              <View style={tw`w-full h-full bg-black/20`}></View>
+            </Motion.View>
+          </Modal>
+        </AnimatePresence>
+        <AnimatePresence>
+          <Modal
+            transparent
+            visible={isPrivacyPolicyVisible[0]}
+            onRequestClose={() => {
+              setIsPrivacyPolicyVisible([false, 0]);
+            }}
+          >
+            <Motion.View
+              key={"modal"}
+              initial={{ opacity: 1, scale: 0 }}
+              exit={{ opacity: 1, scale: 0 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              transition={{
+                type: "spring",
+                delayChildren: 0.2,
+                staggerChildren: 0.2,
+              }}
+              style={tw`flex-1 justify-center`}
+            >
+              <View
+                style={tw`bg-[#f5f3eb] my-[10%] mx-[10%] rounded-xl px-5 justify-center`}
+              >
+                <Text style={[tw`text-2xl`, { fontFamily: "Inter-EB" }]}>
+                  Privacy Policy
+                </Text>
+                <View style={tw`mt-5 flex flex-col gap-3`}>
+                  <ScrollView
+                    style={tw`h-[70%] ${
+                      isPrivacyPolicyVisible[1] === 3 ? "h-[80%]" : null
+                    }`}
+                  >
+                    <View style={tw`flex flex-col gap-3`}>
+                      <Text style={[tw`text-xs`, { fontFamily: "Inter-R" }]}>
+                        {"\t"}
+                        {"\t"}
+                        {"\t"}This Privacy Policy outlines the practices and
+                        procedures for collecting, using, and safeguarding data
+                        in the context of our mental health assessment for
+                        students using Katoto. By checking the box below, you
+                        provide your consent for us to collect and process
+                        certain categories of personal data.
+                      </Text>
+                      <Text style={[tw`text-xs`, { fontFamily: "Inter-R" }]}>
+                        {"\t"}
+                        {"\t"}
+                        {"\t"}We collect various details, including names, dates
+                        of birth, contact information such as email addresses
+                        and phone numbers, educational institution details, and
+                        other relevant profile information. Additionally, we
+                        gather data related to mental health, including
+                        counselor-guided conversations, session notes with
+                        mental health advocates/guidance counselors, and any
+                        additional information voluntarily provided concerning
+                        mental health concerns.
+                      </Text>
+                      <Text style={[tw`text-xs`, { fontFamily: "Inter-R" }]}>
+                        {"\t"}
+                        {"\t"}
+                        {"\t"}The primary purposes of collecting and processing
+                        this data are to provide improved mental health
+                        assessments for students, identify potential mental
+                        health concerns, and enhance our services. This valuable
+                        information is only accessible to our team of guidance
+                        counselors at PLV.
+                      </Text>
+                      <Text style={[tw`text-xs`, { fontFamily: "Inter-R" }]}>
+                        {"\t"}
+                        {"\t"}
+                        {"\t"}Ensuring the security of your data is of utmost
+                        importance to us. We have implemented up-to-date
+                        security measures to ensure the safety of your data.
+                      </Text>
+                      <Text style={[tw`text-xs`, { fontFamily: "Inter-R" }]}>
+                        {"\t"}
+                        {"\t"}
+                        {"\t"}You have certain rights regarding your data,
+                        including the right to access, correct, or delete your
+                        personal data, the right to withdraw consent for data
+                        processing (if applicable), the right to object to data
+                        processing, and the right to file a complaint with a
+                        data protection authority.
+                      </Text>
+                      <Text style={[tw`text-xs`, { fontFamily: "Inter-R" }]}>
+                        {"\t"}
+                        {"\t"}
+                        {"\t"}If you have any questions or concerns regarding
+                        this Privacy Policy or the data we collect, please do
+                        not hesitate to provide a feedback.
+                      </Text>
+                    </View>
+                  </ScrollView>
+                  {isPrivacyPolicyVisible[1] !== 3 ? (
+                    <View style={tw`flex gap-3 mb-3 flex-row w-full`}>
+                      <Checkbox
+                        value={isPrivacyPolicyChecked}
+                        onValueChange={setIsPrivacyPolicyChecked}
+                        color={"#2d757c"}
+                      />
+
+                      <Text
+                        style={[
+                          tw`text-xs flex w-[89%]`,
+                          { fontFamily: "Inter-R" },
+                        ]}
+                      >
+                        By ticking the box, you acknowledge that you have read
+                        and understood this Privacy Policy and consent to the
+                        collection and processing of your personal data as
+                        described herein.
+                      </Text>
+                    </View>
+                  ) : (
+                    <></>
+                  )}
+                </View>
+
+                <View style={tw`flex flex-row gap-3 justify-end`}>
+                  <TouchableOpacity
+                    style={tw`text-sm px-5 py-2 rounded-lg bg-[#ff6961] border-2 border-[#ff6961] ${
+                      isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
+                    }`}
+                    onPress={() => {
+                      setIsPrivacyPolicyVisible([false, 0]);
+                    }}
+                  >
+                    <Text style={tw`text-[#f5f3eb]`}>Cancel</Text>
+                  </TouchableOpacity>
+                  {isPrivacyPolicyVisible[1] !== 3 ? (
+                    <TouchableOpacity
+                      style={tw`text-sm px-5 py-2 rounded-lg bg-[#2d757c] border-2 border-[#2d757c] ${
+                        !isPrivacyPolicyChecked ? "opacity-50" : null
+                      }`}
+                      disabled={!isPrivacyPolicyChecked}
+                      onPress={() => {
+                        if (isPrivacyPolicyVisible[1] === 1) {
+                          setIsGuided(true);
+                        } else if (isPrivacyPolicyVisible[1] === 2) {
+                          setIsFriendly(true);
+                        }
+                        setIsPrivacyPolicyVisible([false, 0]);
+                      }}
+                    >
+                      <Text style={tw`text-[#f5f3eb]`}>Submit</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <></>
+                  )}
+                </View>
+              </View>
+            </Motion.View>
+          </Modal>
+        </AnimatePresence>
+
         {/* <Button title="Logout" onPress={signOut}></Button> */}
 
         <View
@@ -312,7 +509,7 @@ const Chat = memo(({ auth, Toast }) => {
           />
         </View>
 
-        {isGuided || isFriendly ? (
+        {isPrivacyPolicyChecked && (isGuided || isFriendly) ? (
           <Messages
             isGuided={isGuided}
             messages={messages}
@@ -326,7 +523,9 @@ const Chat = memo(({ auth, Toast }) => {
             <TouchableOpacity
               style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
               onPress={() => {
-                setIsGuided(true);
+                setIsPrivacyPolicyChecked(false);
+                setIsPrivacyPolicyVisible([true, 1]);
+                actionMessage("DELETE_MESSAGE", {});
               }}
             >
               <Text style={tw`text-[#f5f3eb] font-medium`}>
@@ -336,7 +535,8 @@ const Chat = memo(({ auth, Toast }) => {
             <TouchableOpacity
               style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
               onPress={() => {
-                setIsFriendly(true);
+                setIsPrivacyPolicyChecked(false);
+                setIsPrivacyPolicyVisible([true, 2]);
                 actionMessage("DELETE_MESSAGE", {});
               }}
             >
@@ -344,7 +544,19 @@ const Chat = memo(({ auth, Toast }) => {
                 Friendly Conversation Mode
               </Text>
             </TouchableOpacity>
-            <Text>Learn more about our Privacy Policy</Text>
+            <Text style={tw`flex flex-row`}>
+              Learn more about our
+              <Text
+                style={[tw`text-[#2d757c]`, { fontFamily: "Inter-B" }]}
+                onPress={() => {
+                  setIsPrivacyPolicyVisible([true, 3]);
+                }}
+              >
+                {" "}
+                Privacy Policy
+              </Text>
+              .
+            </Text>
             <Text style={tw`mb-10`}>Please leave a feedback here.</Text>
           </View>
         )}

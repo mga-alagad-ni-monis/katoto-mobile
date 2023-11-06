@@ -37,7 +37,8 @@
     "recyclerlistview": "^4.2.0",
     "redux": "^4.2.1",
     "redux-thunk": "^2.4.2",
-    "twrnc": "^3.6.4"
+    "twrnc": "^3.6.4",
+    "expo-checkbox": "~2.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
