@@ -5,8 +5,8 @@ import {
   TouchableOpacity,
   Image,
   Modal,
-  Pressable,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { AuthContext } from "../context/AuthContext";
 import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
@@ -22,7 +22,6 @@ import {
 } from "react";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import ToastComponent from "../components/ToastComponent";
 import { TypingAnimation } from "react-native-typing-animation";
 import Messages from "../components/Messages";
@@ -37,6 +36,7 @@ const Chat = memo(({ auth, Toast }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [disable, setDisable] = useState(true);
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
   const [isPrivacyPolicyChecked, setIsPrivacyPolicyChecked] = useState(false);
   const [isPrivacyPolicyVisible, setIsPrivacyPolicyVisible] = useState([
     false,
@@ -96,7 +96,6 @@ const Chat = memo(({ auth, Toast }) => {
           await handleGetConversation(20);
         }
         setDisable(true);
-        setIsLoading(false);
         handleSubmitMessage(
           auth?.accessToken,
           isGuided
@@ -112,6 +111,7 @@ const Chat = memo(({ auth, Toast }) => {
 
   const handleGetConversation = async (param) => {
     try {
+      setIsLoading(true);
       await axios
         .get(`${API_URI}/api/logs/get/student-limit?limit=${param}`, {
           withCredentials: true,
@@ -121,7 +121,7 @@ const Chat = memo(({ auth, Toast }) => {
         })
         .then((res) => {
           actionMessage("GET_MESSAGE", res?.data?.conversation);
-          isLoadMore = false;
+          setIsLoading(false);
         })
         .catch((err) => {
           console.log(err);
@@ -311,7 +311,10 @@ const Chat = memo(({ auth, Toast }) => {
     <SafeAreaView>
       <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3`}>
         <AnimatePresence>
-          <Modal visible={isPrivacyPolicyVisible[0]} transparent>
+          <Modal
+            visible={isPrivacyPolicyVisible[0] || isProfileVisible}
+            transparent
+          >
             <Motion.View
               key={"modal1"}
               initial={{ opacity: 0 }}
@@ -450,16 +453,20 @@ const Chat = memo(({ auth, Toast }) => {
                   )}
                 </View>
 
-                <View style={tw`flex flex-row gap-3 justify-end`}>
+                <View style={tw`flex flex-row justify-end`}>
                   <TouchableOpacity
-                    style={tw`text-sm px-5 py-2 rounded-lg bg-[#ff6961] border-2 border-[#ff6961] ${
+                    style={tw`text-sm px-5 py-2 rounded-lg ${
                       isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
                     }`}
                     onPress={() => {
                       setIsPrivacyPolicyVisible([false, 0]);
                     }}
                   >
-                    <Text style={tw`text-[#f5f3eb]`}>Cancel</Text>
+                    <Text
+                      style={[tw`text-[#ff6961]`, { fontFamily: "Inter-EB" }]}
+                    >
+                      Close
+                    </Text>
                   </TouchableOpacity>
                   {isPrivacyPolicyVisible[1] !== 3 ? (
                     <TouchableOpacity
@@ -487,36 +494,113 @@ const Chat = memo(({ auth, Toast }) => {
           </Modal>
         </AnimatePresence>
 
-        {/* <Button title="Logout" onPress={signOut}></Button> */}
+        <Modal
+          transparent
+          visible={isProfileVisible}
+          onRequestClose={() => {
+            setIsProfileVisible(false);
+          }}
+        >
+          <Motion.View
+            key={"modal"}
+            initial={{ opacity: 1, scale: 0 }}
+            exit={{ opacity: 1, scale: 0 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+            }}
+            transition={{
+              type: "spring",
+              delayChildren: 0.2,
+              staggerChildren: 0.2,
+            }}
+            style={tw`flex-1 justify-center`}
+          >
+            <View
+              style={tw`bg-[#f5f3eb] my-[10%] mx-[10%] rounded-xl p-5 justify-center`}
+            >
+              <Text style={[tw`text-2xl`, { fontFamily: "Inter-EB" }]}>
+                Profile
+              </Text>
+              <View style={tw`flex flex-row gap-5 mt-3`}>
+                <SimpleLineIcons name="user" size={24} color="black" />
+                <Text style={[tw`text-lg`, { fontFamily: "Inter-M" }]}>
+                  {auth?.userInfo?.name}
+                </Text>
+              </View>
+              <View style={tw`flex flex-row justify-end mt-5`}>
+                <TouchableOpacity
+                  style={tw`text-sm px-5 py-2 rounded-lg ${
+                    isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
+                  }`}
+                  onPress={() => {
+                    setIsProfileVisible(false);
+                  }}
+                >
+                  <Text
+                    style={[tw`text-[#2d757c] `, { fontFamily: "Inter-EB" }]}
+                  >
+                    Close
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={tw`text-sm px-5 py-2 rounded-lg bg-[#ff6961] border-2 border-[#ff6961] ${
+                    isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
+                  }`}
+                  onPress={signOut}
+                >
+                  <Text style={tw`text-[#f5f3eb]`}>Log Out</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Motion.View>
+        </Modal>
 
         <View
-          style={tw`w-full flex flex-row gap-5 items-center px-5 shadow-2xl mb-3`}
+          style={tw`w-full flex flex-row gap-5 items-center justify-between px-5 shadow-2xl mb-3`}
         >
+          <View style={tw`flex flex-row gap-5 items-center`}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsGuided(false);
+                setIsFriendly(false);
+                setGuidedButtons([]);
+                setLimit(0);
+                actionMessage("DELETE_MESSAGE", {});
+              }}
+            >
+              <SimpleLineIcons name="arrow-left" size={18} color="black" />
+            </TouchableOpacity>
+            <Image
+              style={tw`h-[40px] w-[40px] bg-[#a9e6c2] rounded-full`}
+              source={require("../assets/katoto/katoto-logo.png")}
+            />
+          </View>
           <TouchableOpacity
             onPress={() => {
-              setIsGuided(false);
-              setIsFriendly(false);
-              setGuidedButtons([]);
-              setLimit(0);
-              actionMessage("DELETE_MESSAGE", {});
+              setIsProfileVisible(true);
             }}
           >
-            <SimpleLineIcons name="arrow-left" size={18} color="black" />
+            <SimpleLineIcons name="options-vertical" size={18} color="black" />
           </TouchableOpacity>
-          <Image
-            style={tw`h-[40px] w-[40px] bg-[#a9e6c2] rounded-full`}
-            source={require("../assets/katoto/katoto-logo.png")}
-          />
         </View>
 
         {isPrivacyPolicyChecked && (isGuided || isFriendly) ? (
-          <Messages
-            isGuided={isGuided}
-            messages={messages}
-            handleGetConversation={handleGetConversation}
-            setLimit={setLimit}
-            limit={limit}
-          />
+          isLoading ? (
+            <View
+              style={tw`h-full w-full flex flex-row justify-center items-center`}
+            >
+              <ActivityIndicator size="extra-large" color="#2d757c" />
+            </View>
+          ) : (
+            <Messages
+              isGuided={isGuided}
+              messages={messages}
+              handleGetConversation={handleGetConversation}
+              setLimit={setLimit}
+              limit={limit}
+            />
+          )
         ) : (
           <View style={tw`flex items-center gap-3 h-full justify-end pb-10`}>
             <Text>Click to choose</Text>
