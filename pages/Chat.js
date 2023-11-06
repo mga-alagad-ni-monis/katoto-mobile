@@ -93,6 +93,7 @@ const Chat = memo(({ auth, Toast }) => {
     if (isGuided || isFriendly) {
       (async () => {
         if (isGuided) {
+          setIsLoading(true);
           await handleGetConversation(20);
         }
         setDisable(true);
@@ -111,7 +112,6 @@ const Chat = memo(({ auth, Toast }) => {
 
   const handleGetConversation = async (param) => {
     try {
-      setIsLoading(true);
       await axios
         .get(`${API_URI}/api/logs/get/student-limit?limit=${param}`, {
           withCredentials: true,

@@ -95,7 +95,7 @@ const Messages = ({
   const listHeaderComponent = useCallback(() => {
     return (
       <View style={tw`mt-5`}>
-        <ActivityIndicator size="large" color="#2d757c" />
+        <ActivityIndicator size="extra-large" color="#2d757c" />
       </View>
     );
   }, []);
@@ -136,18 +136,18 @@ const Messages = ({
           setIsReady(true);
         }
       }}
-      // onStartReached={() => {
-      //   if (isReady && isGuided) {
-      //     setIsLoading(true);
-      //     setIsReady(false);
-      //     setTimeout(async () => {
-      //       setLimit((prev) => prev + 20);
-      //       await handleGetConversation(limit + 20);
-      //       setIsLoading(false);
-      //       setOffset(70);
-      //     }, 3000);
-      //   }
-      // }}
+      onStartReached={() => {
+        if (isReady && isGuided) {
+          setIsLoading(true);
+          setIsReady(false);
+          setTimeout(async () => {
+            setLimit((prev) => prev + 20);
+            await handleGetConversation(limit + 20);
+            setIsLoading(false);
+            setOffset(70);
+          }, 3000);
+        }
+      }}
       onContentSizeChange={() => {
         if (!(percVal <= 0)) {
           setIsReady(false);
