@@ -26,7 +26,6 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.katoto.katotomobile",
-      "usesCleartextTraffic": true,
       "permissions": [
         "ACCESS_NETWORK_STATE",
         "INTERNET"
@@ -37,7 +36,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "adfd483d-b32d-4616-9652-3d6129a8dc48"
+        "projectId": "e0e29c15-fafa-406d-ae7d-d1c4e3fb88a5"
       }
     }
   }

@@ -7,11 +7,13 @@ import {
   Modal,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { AuthContext } from "../context/AuthContext";
-import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
+import { AntDesign, Ionicons, SimpleLineIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import tw from "twrnc";
-import { API_URI, KATOTO_CG_API_URI, KATOTO_FC_API_URI } from "@env";
+// import { API_URI, KATOTO_CG_API_URI, KATOTO_FC_API_URI } from "@env";
 import {
   useEffect,
   memo,
@@ -27,13 +29,20 @@ import { TypingAnimation } from "react-native-typing-animation";
 import Messages from "../components/Messages";
 import { AnimatePresence, Motion } from "@legendapp/motion";
 import Checkbox from "expo-checkbox";
+import moment from "moment-timezone";
+import MaskedView from "@react-native-masked-view/masked-view";
+
+const API_URI = process.env.API_URI;
+const KATOTO_CG_API_URI = process.env.KATOTO_CG_API_URI;
+const KATOTO_FC_API_URI = process.env.KATOTO_FC_API_URI;
 
 const Chat = memo(({ auth, Toast }) => {
   const { signOut } = useContext(AuthContext);
 
   const [isGuided, setIsGuided] = useState(false);
   const [isFriendly, setIsFriendly] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMain, setIsLoadingMain] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [disable, setDisable] = useState(true);
   const [isProfileVisible, setIsProfileVisible] = useState(false);
@@ -46,6 +55,8 @@ const Chat = memo(({ auth, Toast }) => {
   const [limit, setLimit] = useState(20);
 
   const [katotoMessage, setKatotoMessage] = useState("");
+  const [campaign, setCampaign] = useState("");
+  const [quote, setQuote] = useState("");
 
   const [guidedButtons, setGuidedButtons] = useState([]);
   const [messages, dispatchMessage] = useReducer(messageReducer, []);
@@ -90,6 +101,15 @@ const Chat = memo(({ auth, Toast }) => {
   }
 
   useEffect(() => {
+    (async () => {
+      setIsLoadingMain(true);
+      await getQuote();
+      await handleGetPublishedCampaign();
+      setIsLoadingMain(false);
+    })();
+  }, []);
+
+  useEffect(() => {
     if (isGuided || isFriendly) {
       (async () => {
         if (isGuided) {
@@ -109,6 +129,69 @@ const Chat = memo(({ auth, Toast }) => {
       })();
     }
   }, [isGuided, isFriendly]);
+
+  const getQuote = async () => {
+    await axios
+      .get(`${API_URI}/api/train/get-quote`, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${auth?.accessToken}`,
+        },
+      })
+      .then((res) => {
+        setQuote(res?.data?.quote);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const handleGetPublishedCampaign = async () => {
+    try {
+      await axios.get(`${API_URI}/api/get-published-latest`).then((res) => {
+        const newCampaigns = res?.data?.campaigns?.map((i) => {
+          if (new Date(i["effectivityDate"]) > new Date()) {
+            i["effectivityDate"] = convertDate(i["effectivityDate"])[1];
+            return i;
+          }
+        });
+
+        setCampaign(newCampaigns[0]);
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const convertDate = (date) => {
+    const formattedDate = new Date(date);
+
+    const convertedDateTime = formattedDate.toLocaleString("en-PH", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      timeZone: "Asia/Singapore",
+    });
+
+    const convertedDate = formattedDate.toLocaleString("en-PH", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "Asia/Singapore",
+    });
+
+    const convertedTime = formattedDate.toLocaleString("en-PH", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      timeZone: "Asia/Singapore",
+    });
+
+    return [convertedDateTime, convertedDate, convertedTime];
+  };
 
   const handleGetConversation = async (param) => {
     try {
@@ -307,9 +390,27 @@ const Chat = memo(({ auth, Toast }) => {
     [friendlyMsg, guidedButtons]
   );
 
+  if (isLoadingMain) {
+    return (
+      <SafeAreaView
+        style={tw`bg-[#f5f3eb] flex justify-center items-center w-full h-full`}
+      >
+        <View>
+          <ActivityIndicator size="extra-large" color="#2d757c" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView>
-      <View style={tw`bg-[#f5f3eb] w-full h-full pb-5 pt-3`}>
+      {/* <LinearGradient
+        colors={["#1cd8d2", "#a9e6c2", "#f5f3eb", "#f5f3eb"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      > */}
+
+      <View style={tw`w-full h-full pb-5 pt-3 bg-[#f5f3eb]`}>
         <AnimatePresence>
           <Modal
             visible={isPrivacyPolicyVisible[0] || isProfileVisible}
@@ -493,7 +594,6 @@ const Chat = memo(({ auth, Toast }) => {
             </Motion.View>
           </Modal>
         </AnimatePresence>
-
         <Modal
           transparent
           visible={isProfileVisible}
@@ -559,22 +659,53 @@ const Chat = memo(({ auth, Toast }) => {
         <View
           style={tw`w-full flex flex-row gap-5 items-center justify-between px-5 shadow-2xl mb-3`}
         >
-          <View style={tw`flex flex-row gap-5 items-center`}>
-            <TouchableOpacity
-              onPress={() => {
-                setIsGuided(false);
-                setIsFriendly(false);
-                setGuidedButtons([]);
-                setLimit(0);
-                actionMessage("DELETE_MESSAGE", {});
-              }}
-            >
-              <SimpleLineIcons name="arrow-left" size={18} color="black" />
-            </TouchableOpacity>
-            <Image
-              style={tw`h-[40px] w-[40px] bg-[#a9e6c2] rounded-full`}
-              source={require("../assets/katoto/katoto-logo.png")}
-            />
+          <View style={tw`flex flex-row gap-3 items-center`}>
+            {isGuided || isFriendly ? (
+              <TouchableOpacity
+                onPress={() => {
+                  setIsGuided(false);
+                  setIsFriendly(false);
+                  setGuidedButtons([]);
+                  setLimit(0);
+                  actionMessage("DELETE_MESSAGE", {});
+                }}
+              >
+                <AntDesign name="arrowleft" size={28} color="black" />
+              </TouchableOpacity>
+            ) : (
+              <></>
+            )}
+            {isGuided || isFriendly ? (
+              <View style={tw`flex flex-row gap-3`}>
+                <Image
+                  style={tw`${
+                    isGuided || isFriendly ? "bg-[#a9e6c2]" : null
+                  } h-[40px] w-[40px]  rounded-full`}
+                  source={
+                    isGuided || isFriendly
+                      ? require("../assets/katoto/katoto-logo.png")
+                      : null
+                  }
+                />
+                <View>
+                  <Text style={[tw`flex text-4`, { fontFamily: "Inter-EB" }]}>
+                    Katoto
+                  </Text>
+                  <Text style={[tw`flex text-sm`, { fontFamily: "Inter-R" }]}>
+                    Tara kwentuhan!
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <Text
+                style={[
+                  tw`flex text-8 text-center`,
+                  { fontFamily: "Inter-EB" },
+                ]}
+              >
+                Katoto
+              </Text>
+            )}
           </View>
           <TouchableOpacity
             onPress={() => {
@@ -602,47 +733,125 @@ const Chat = memo(({ auth, Toast }) => {
             />
           )
         ) : (
-          <View style={tw`flex items-center gap-3 h-full justify-end pb-10`}>
-            <Text>Click to choose</Text>
-            <TouchableOpacity
-              style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
-              onPress={() => {
-                setIsPrivacyPolicyChecked(false);
-                setIsPrivacyPolicyVisible([true, 1]);
-                actionMessage("DELETE_MESSAGE", {});
-              }}
-            >
-              <Text style={tw`text-[#f5f3eb] font-medium`}>
-                Counselor-Guided Mode
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
-              onPress={() => {
-                setIsPrivacyPolicyChecked(false);
-                setIsPrivacyPolicyVisible([true, 2]);
-                actionMessage("DELETE_MESSAGE", {});
-              }}
-            >
-              <Text style={tw`text-[#f5f3eb] font-medium`}>
-                Friendly Conversation Mode
-              </Text>
-            </TouchableOpacity>
-            <Text style={tw`flex flex-row`}>
-              Learn more about our
-              <Text
-                style={[tw`text-[#2d757c]`, { fontFamily: "Inter-B" }]}
-                onPress={() => {
-                  setIsPrivacyPolicyVisible([true, 3]);
-                }}
+          <>
+            <View style={tw`flex items-center gap-3 h-full justify-between`}>
+              <View style={tw`w-full px-5 flex flex-col gap-3 mt-3`}>
+                <View>
+                  <LinearGradient
+                    style={tw`rounded-lg p-3 flex flex-col gap-2`}
+                    colors={["#1cd8d2", "#a9e6c2"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                  >
+                    <View style={tw`flex flex-row justify-between`}>
+                      <Text style={[tw`text-xl`, { fontFamily: "Inter-B" }]}>
+                        {campaign?.title}
+                      </Text>
+                      <View
+                        style={[
+                          tw`bg-[#2d757c] rounded-full py-1 px-2 w-fit`,
+                          { fontFamily: "Inter-B" },
+                        ]}
+                      >
+                        <Text style={[tw`text-[#f5f3eb] capitalize`]}>
+                          {campaign?.campaignType}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text>
+                      Until:{" "}
+                      {moment(campaign?.effectivityDate, "DD MMMM YYYY").format(
+                        "MMMM D, YYYY"
+                      )}
+                    </Text>
+                    <Text numberOfLines={1} ellipsizeMode="tail">
+                      {campaign?.description}
+                    </Text>
+                  </LinearGradient>
+                </View>
+                <View>
+                  <LinearGradient
+                    style={tw`w-fit rounded-lg p-3 flex flex-col gap-2`}
+                    colors={["#a9e6c2", "#a9e6c2"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                  >
+                    <Text
+                      style={[
+                        tw`text-xl text-center`,
+                        { fontFamily: "Inter-B" },
+                      ]}
+                    >
+                      Qoute of the Day
+                    </Text>
+                    <Text style={[tw`text-center`]}>{quote?.quote}</Text>
+                    <Text style={[tw`text-center`, { fontFamily: "Inter-B" }]}>
+                      {quote?.author}
+                    </Text>
+                  </LinearGradient>
+                </View>
+              </View>
+              <View
+                style={tw`flex items-center gap-3 w-full justify-end pb-10`}
               >
-                {" "}
-                Privacy Policy
-              </Text>
-              .
-            </Text>
-            <Text style={tw`mb-10`}>Please leave a feedback here.</Text>
-          </View>
+                <Text>Click to choose</Text>
+                <TouchableOpacity
+                  style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
+                  onPress={() => {
+                    setIsPrivacyPolicyChecked(false);
+                    setIsPrivacyPolicyVisible([true, 1]);
+                    actionMessage("DELETE_MESSAGE", {});
+                  }}
+                >
+                  <Text style={tw`text-[#f5f3eb] font-medium`}>
+                    Counselor-Guided Mode
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={tw`text-sm px-5 py-2 rounded-full bg-[#2d757c] border-2 border-[#2d757c]`}
+                  onPress={() => {
+                    setIsPrivacyPolicyChecked(false);
+                    setIsPrivacyPolicyVisible([true, 2]);
+                    actionMessage("DELETE_MESSAGE", {});
+                  }}
+                >
+                  <Text style={tw`text-[#f5f3eb] font-medium`}>
+                    Friendly Conversation Mode
+                  </Text>
+                </TouchableOpacity>
+                <Text style={tw`flex flex-row`}>
+                  Learn more about our
+                  <Text
+                    style={[tw`text-[#2d757c]`, { fontFamily: "Inter-B" }]}
+                    onPress={() => {
+                      setIsPrivacyPolicyVisible([true, 3]);
+                    }}
+                  >
+                    {" "}
+                    Privacy Policy
+                  </Text>
+                  .
+                </Text>
+                <Text style={tw`flex flex-row text-center mb-10 w-2/3`}>
+                  <Text style={[tw`text-[#ff6961]`, { fontFamily: "Inter-B" }]}>
+                    {" "}
+                    Reminder
+                  </Text>
+                  : To schedule an appointment, please visit our
+                  <Text
+                    style={[tw`text-[#2d757c]`, { fontFamily: "Inter-B" }]}
+                    onPress={() => {
+                      Linking.openURL("https://katoto.live");
+                    }}
+                  >
+                    {" "}
+                    website
+                  </Text>
+                  .
+                </Text>
+              </View>
+            </View>
+          </>
         )}
         {isGuided || isFriendly ? (
           <View
@@ -795,6 +1004,7 @@ const Chat = memo(({ auth, Toast }) => {
           <></>
         )}
       </View>
+      {/* </LinearGradient> */}
       <ToastComponent />
     </SafeAreaView>
   );

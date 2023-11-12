@@ -8,12 +8,15 @@ import tw from "twrnc";
 import axios from "axios";
 import { useFonts } from "expo-font";
 import AppLoading from "expo-app-loading";
-import { API_URI } from "@env";
 
 import Chat from "./pages/Chat";
 import Home from "./pages/Home";
 import LoginScreen from "./pages/LoginScreen";
 import { AuthContext } from "./context/AuthContext";
+
+const API_URI = process.env.API_URI;
+const KATOTO_CG_API_URI = process.env.KATOTO_CG_API_URI;
+const KATOTO_FC_API_URI = process.env.KATOTO_FC_API_URI;
 
 export default function App() {
   let [fontsLoaded] = useFonts({

@@ -9,12 +9,16 @@ import {
   ActivityIndicator,
   ImageBackground,
 } from "react-native";
-import { API_URI } from "@env";
+// import { API_URI } from "@env";
 import tw from "twrnc";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
+
+const API_URI = process.env.API_URI;
+const KATOTO_CG_API_URI = process.env.KATOTO_CG_API_URI;
+const KATOTO_FC_API_URI = process.env.KATOTO_FC_API_URI;
 
 function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
