@@ -46,6 +46,7 @@ const Chat = memo(({ auth, Toast }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [disable, setDisable] = useState(true);
   const [isProfileVisible, setIsProfileVisible] = useState(false);
+  const [isProceedWeb, setIsProceedWeb] = useState(false);
   const [isPrivacyPolicyChecked, setIsPrivacyPolicyChecked] = useState(false);
   const [isPrivacyPolicyVisible, setIsPrivacyPolicyVisible] = useState([
     false,
@@ -281,13 +282,13 @@ const Chat = memo(({ auth, Toast }) => {
               isProblem = true;
             }
 
-            // if (inputMessage.payload === "Open SOS") {
-            //   setPopUpSOS(true);
-            // }
+            if (inputMessage.payload === "Open SOS") {
+              setIsProceedWeb(true);
+            }
 
-            // if (inputMessage.payload === "Open Regular") {
-            //   setPopUpStandard(true);
-            // }
+            if (inputMessage.payload === "Open Regular") {
+              setIsProceedWeb(true);
+            }
 
             // if (inputMessage.payload === "Open Feedback") {
             //   setIsOpenFeedbackModal(true);
@@ -331,11 +332,11 @@ const Chat = memo(({ auth, Toast }) => {
                 message: res.data[0].text,
               });
               setIsTyping(false);
-              // if (res.data[0].custom !== undefined) {
-              //   setTimeout(() => {
-              //     setPopUpSOS(res.data[0].custom.opensos);
-              //   }, 900);
-              // }
+              if (res.data[0].custom !== undefined) {
+                setTimeout(() => {
+                  setIsProceedWeb(true);
+                }, 900);
+              }
               setDisable(false);
             }, 900);
 
@@ -413,7 +414,9 @@ const Chat = memo(({ auth, Toast }) => {
       <View style={tw`w-full h-full pb-5 pt-3 bg-[#f5f3eb]`}>
         <AnimatePresence>
           <Modal
-            visible={isPrivacyPolicyVisible[0] || isProfileVisible}
+            visible={
+              isPrivacyPolicyVisible[0] || isProfileVisible || isProceedWeb
+            }
             transparent
           >
             <Motion.View
@@ -460,7 +463,7 @@ const Chat = memo(({ auth, Toast }) => {
               <View
                 style={tw`bg-[#f5f3eb] my-[10%] mx-[10%] rounded-xl px-5 justify-center`}
               >
-                <Text style={[tw`text-2xl`, { fontFamily: "Inter-EB" }]}>
+                <Text style={[tw`text-xl`, { fontFamily: "Inter-EB" }]}>
                   Privacy Policy
                 </Text>
                 <View style={tw`mt-5 flex flex-col gap-3`}>
@@ -594,67 +597,139 @@ const Chat = memo(({ auth, Toast }) => {
             </Motion.View>
           </Modal>
         </AnimatePresence>
-        <Modal
-          transparent
-          visible={isProfileVisible}
-          onRequestClose={() => {
-            setIsProfileVisible(false);
-          }}
-        >
-          <Motion.View
-            key={"modal"}
-            initial={{ opacity: 1, scale: 0 }}
-            exit={{ opacity: 1, scale: 0 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
+        <AnimatePresence>
+          <Modal
+            transparent
+            visible={isProfileVisible}
+            onRequestClose={() => {
+              setIsProfileVisible(false);
             }}
-            transition={{
-              type: "spring",
-              delayChildren: 0.2,
-              staggerChildren: 0.2,
-            }}
-            style={tw`flex-1 justify-center`}
           >
-            <View
-              style={tw`bg-[#f5f3eb] my-[10%] mx-[10%] rounded-xl p-5 justify-center`}
+            <Motion.View
+              key={"modal"}
+              initial={{ opacity: 1, scale: 0 }}
+              exit={{ opacity: 1, scale: 0 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              transition={{
+                type: "spring",
+                delayChildren: 0.2,
+                staggerChildren: 0.2,
+              }}
+              style={tw`flex-1 justify-center`}
             >
-              <Text style={[tw`text-2xl`, { fontFamily: "Inter-EB" }]}>
-                Profile
-              </Text>
-              <View style={tw`flex flex-row gap-5 mt-3`}>
-                <SimpleLineIcons name="user" size={24} color="black" />
-                <Text style={[tw`text-lg`, { fontFamily: "Inter-M" }]}>
-                  {auth?.userInfo?.name}
+              <View
+                style={tw`bg-[#f5f3eb] my-[10%] mx-[10%] rounded-xl p-5 justify-center`}
+              >
+                <Text style={[tw`text-xl`, { fontFamily: "Inter-EB" }]}>
+                  Profile
                 </Text>
-              </View>
-              <View style={tw`flex flex-row justify-end mt-5`}>
-                <TouchableOpacity
-                  style={tw`text-sm px-5 py-2 rounded-lg ${
-                    isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
-                  }`}
-                  onPress={() => {
-                    setIsProfileVisible(false);
-                  }}
-                >
-                  <Text
-                    style={[tw`text-[#2d757c] `, { fontFamily: "Inter-EB" }]}
-                  >
-                    Close
+                <View style={tw`flex flex-row gap-5 mt-3`}>
+                  <SimpleLineIcons name="user" size={24} color="black" />
+                  <Text style={[tw`text-lg`, { fontFamily: "Inter-M" }]}>
+                    {auth?.userInfo?.name}
                   </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={tw`text-sm px-5 py-2 rounded-lg bg-[#ff6961] border-2 border-[#ff6961] ${
-                    isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
-                  }`}
-                  onPress={signOut}
-                >
-                  <Text style={tw`text-[#f5f3eb]`}>Log Out</Text>
-                </TouchableOpacity>
+                </View>
+                <View style={tw`flex flex-row justify-end mt-5`}>
+                  <TouchableOpacity
+                    style={tw`text-sm px-5 py-2 rounded-lg ${
+                      isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
+                    }`}
+                    onPress={() => {
+                      setIsProfileVisible(false);
+                    }}
+                  >
+                    <Text
+                      style={[tw`text-[#2d757c] `, { fontFamily: "Inter-EB" }]}
+                    >
+                      Close
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={tw`text-sm px-5 py-2 rounded-lg bg-[#ff6961] border-2 border-[#ff6961] ${
+                      isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
+                    }`}
+                    onPress={signOut}
+                  >
+                    <Text style={tw`text-[#f5f3eb]`}>Log Out</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          </Motion.View>
-        </Modal>
+            </Motion.View>
+          </Modal>
+        </AnimatePresence>
+        <AnimatePresence>
+          <Modal
+            transparent
+            visible={isProceedWeb}
+            onRequestClose={() => {
+              setIsProceedWeb(false);
+            }}
+          >
+            <Motion.View
+              key={"modal"}
+              initial={{ opacity: 1, scale: 0 }}
+              exit={{ opacity: 1, scale: 0 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              transition={{
+                type: "spring",
+                delayChildren: 0.2,
+                staggerChildren: 0.2,
+              }}
+              style={tw`flex-1 justify-center`}
+            >
+              <View
+                style={tw`bg-[#f5f3eb] my-[10%] mx-[10%] rounded-xl p-5 justify-center`}
+              >
+                <Text style={[tw`text-xl`, { fontFamily: "Inter-EB" }]}>
+                  Do you want to proceed?
+                </Text>
+                <View style={tw`flex flex-row gap-5 mt-3`}>
+                  <Text style={[tw``, { fontFamily: "Inter-M" }]}>
+                    <Text
+                      style={[tw`text-[#ff6961]`, { fontFamily: "Inter-B" }]}
+                    >
+                      Reminder
+                    </Text>
+                    : To schedule an appointment, please visit our website. If
+                    you proceed, you will be redirected to our website.
+                  </Text>
+                </View>
+                <View style={tw`flex flex-row justify-end mt-5`}>
+                  <TouchableOpacity
+                    style={tw`text-sm px-5 py-2 rounded-lg ${
+                      isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
+                    }`}
+                    onPress={() => {
+                      setIsProceedWeb(false);
+                    }}
+                  >
+                    <Text
+                      style={[tw`text-[#ff6961] `, { fontFamily: "Inter-EB" }]}
+                    >
+                      Close
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={tw`text-sm px-5 py-2 rounded-lg bg-[#2d757c] border-2 border-[#2d757c] ${
+                      isPrivacyPolicyVisible[1] === 3 ? "mt-3" : null
+                    }`}
+                    onPress={() => {
+                      Linking.openURL("https://katoto.live");
+                    }}
+                  >
+                    <Text style={tw`text-[#f5f3eb]`}>Proceed</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Motion.View>
+          </Modal>
+        </AnimatePresence>
 
         <View
           style={tw`w-full flex flex-row gap-5 items-center justify-between px-5 shadow-2xl mb-3`}
@@ -841,7 +916,7 @@ const Chat = memo(({ auth, Toast }) => {
                   <Text
                     style={[tw`text-[#2d757c]`, { fontFamily: "Inter-B" }]}
                     onPress={() => {
-                      Linking.openURL("https://katoto.live");
+                      setIsProceedWeb(true);
                     }}
                   >
                     {" "}
